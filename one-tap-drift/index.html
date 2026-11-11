@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>One-Tap Drift - 2D Arcade Racing Game</title>
+    <meta name="description" content="An addictive 2D top-down arcade racing game where precision one-tap drifting keeps your sports car flying along endless winding roads." />
+    <meta property="og:title" content="One-Tap Drift" />
+    <meta property="og:description" content="Master precision one-tap drifts on endless winding tracks in this high-octane 2D arcade racer." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body data-state="title">
+    <div id="game-container" role="application" aria-label="One-Tap Drift Game">
+      <!-- 2D Canvas -->
+      <canvas id="game-canvas"></canvas>
+
+      <!-- Feedback Float Container -->
+      <div id="feedback-container"></div>
+
+      <!-- Turn Telegraph & Drift Timing Radar -->
+      <div id="turn-telegraph-container" style="opacity: 0;">
+        <div class="turn-arrow-badge" id="turn-arrow-badge">
+          <span id="turn-arrow-text">TURN RIGHT ➔</span>
+        </div>
+        <div class="drift-meter-box" role="meter" aria-label="Drift Timing Meter">
+          <div class="drift-meter-zone zone-early"></div>
+          <div class="drift-meter-zone zone-good-1"></div>
+          <div class="drift-meter-zone zone-perfect"></div>
+          <div class="drift-meter-zone zone-good-2"></div>
+          <div class="drift-meter-zone zone-deadline"></div>
+          <div class="drift-needle" id="drift-needle" style="left: 0%;"></div>
+        </div>
+        <div class="drift-hint-text">TAP IN BLUE SWEET SPOT</div>
+      </div>
+
+      <!-- ================= SCREEN: MAIN MENU ================= -->
+      <div id="screen-menu" class="ui-layer" role="region" aria-label="Main Menu">
+        <header class="menu-header">
+          <div class="stat-chip" title="Personal Best Score">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#ffd166" stroke-width="2" aria-hidden="true">
+              <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/>
+              <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+              <path d="M4 22h16"/>
+              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+              <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/>
+            </svg>
+            <span id="menu-best-score">0</span>
+          </div>
+
+          <div style="display: flex; gap: 0.6rem; align-items: center;">
+            <div class="stat-chip" title="Coin Balance">
+              <svg viewBox="0 0 24 24" fill="#ffd166" stroke="#b38a00" stroke-width="1.5" aria-hidden="true">
+                <circle cx="12" cy="12" r="9"/>
+                <path d="M12 7v10M9 9.5c.5-.8 1.5-1.5 3-1.5 2 0 3 1.2 3 2.5s-1.5 2.5-3 2.5-3 1.2-3 2.5 1 2.5 3 2.5c1.5 0 2.5-.7 3-1.5" stroke="#1a1500" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span id="menu-coins">0</span>
+            </div>
+
+            <button class="btn-icon mute-toggle-btn interactive" aria-label="Mute or Unmute Audio">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+            </button>
+          </div>
+        </header>
+
+        <main class="menu-center">
+          <div class="title-container">
+            <div class="title-kicker">Arcade Driving & Reaction</div>
+            <h1 class="game-title">ONE-TAP DRIFT</h1>
+            <p class="title-sub">Tap at the apex to slide with style. Don't crash.</p>
+          </div>
+
+          <div class="menu-actions">
+            <button class="btn btn-primary interactive" id="btn-play" data-start="true">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Start Engine
+            </button>
+            <button class="btn btn-accent interactive" id="btn-garage">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20" aria-hidden="true"><rect x="3" y="11" width="18" height="9" rx="2"/><path d="m5 11 2-5h10l2 5"/><circle cx="7.5" cy="15.5" r="1.5"/><circle cx="16.5" cy="15.5" r="1.5"/></svg>
+              Garage & Cars
+            </button>
+            <button class="btn btn-secondary interactive" id="btn-guide">
+              How to Play
+            </button>
+          </div>
+        </main>
+
+        <footer class="menu-footer">
+          <div class="control-hint">Tap Screen · Mouse Click · Spacebar to Drift</div>
+        </footer>
+      </div>
+
+      <!-- ================= SCREEN: GAMEPLAY HUD ================= -->
+      <div id="screen-hud" class="ui-layer hidden" role="region" aria-label="Gameplay HUD">
+        <div class="hud-top">
+          <!-- Left: Score & Best -->
+          <div class="hud-left">
+            <div class="hud-pill">
+              <span class="hud-label">SCORE</span>
+              <span class="hud-value" id="hud-score">0</span>
+            </div>
+            <div class="hud-pill">
+              <span class="hud-label">BEST</span>
+              <span class="hud-value" id="hud-best">0</span>
+            </div>
+          </div>
+
+          <!-- Center: Distance & Combo -->
+          <div class="hud-center">
+            <div class="hud-pill">
+              <span class="hud-label">DISTANCE</span>
+              <span class="hud-value" id="hud-distance">0 m</span>
+            </div>
+            <div class="combo-badge hidden" id="hud-combo">
+              <span id="combo-text">COMBO x2 🔥</span>
+            </div>
+          </div>
+
+          <!-- Right: Coins & Pause -->
+          <div class="hud-right">
+            <div class="hud-pill">
+              <span class="hud-label">COINS</span>
+              <span class="hud-value hud-coin-val" id="hud-coins">0</span>
+            </div>
+            <button class="btn-icon interactive" id="btn-pause" aria-label="Pause Game">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20" aria-hidden="true"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= SCREEN: COUNTDOWN ================= -->
+      <div id="screen-countdown" class="ui-layer hidden" aria-live="assertive">
+        <div class="countdown-number" id="countdown-number">3</div>
+      </div>
+
+      <!-- ================= MODAL: PAUSE ================= -->
+      <div id="modal-pause" class="modal-overlay hidden" role="dialog" aria-labelledby="pause-title">
+        <div class="modal-card">
+          <h2 class="modal-title" id="pause-title">PAUSED</h2>
+          <p class="modal-sub">Take a breath. The asphalt awaits.</p>
+
+          <div class="modal-actions">
+            <button class="btn btn-primary" id="btn-resume">Resume [P]</button>
+            <button class="btn btn-secondary" id="btn-restart">Restart Run</button>
+            <button class="btn btn-secondary" id="btn-menu-from-pause">Main Menu</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= MODAL: GAME OVER ================= -->
+      <div id="modal-game-over" class="modal-overlay hidden" role="dialog" aria-labelledby="game-over-title">
+        <div class="modal-card">
+          <h2 class="modal-title" style="color: #ef476f;" id="game-over-title">WRECKED!</h2>
+          <p class="modal-sub">You slipped off the track into the gravel barrier.</p>
+
+          <div class="modal-stats-grid">
+            <div class="modal-stat-item">
+              <span class="modal-stat-label">FINAL SCORE</span>
+              <span class="modal-stat-val" id="over-score">0</span>
+              <span class="new-best-flag hidden" id="new-best-flag">NEW BEST RECORD!</span>
+            </div>
+            <div class="modal-stat-item">
+              <span class="modal-stat-label">DISTANCE</span>
+              <span class="modal-stat-val" id="over-dist">0 m</span>
+            </div>
+            <div class="modal-stat-item">
+              <span class="modal-stat-label">COINS EARNED</span>
+              <span class="modal-stat-val" style="color: #ffd166;" id="over-coins">+0</span>
+            </div>
+            <div class="modal-stat-item">
+              <span class="modal-stat-label">ALL-TIME BEST</span>
+              <span class="modal-stat-val" id="over-best">0</span>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn btn-primary" id="btn-retry" data-start="true">Try Again [Space]</button>
+            <button class="btn btn-accent" id="btn-garage-from-over">Visit Garage</button>
+            <button class="btn btn-secondary" id="btn-menu-from-over">Main Menu</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= MODAL: GARAGE ================= -->
+      <div id="modal-garage" class="modal-overlay hidden" role="dialog" aria-labelledby="garage-title">
+        <div class="modal-card">
+          <div class="garage-balance-row">
+            <h2 class="modal-title" id="garage-title" style="margin-bottom: 0;">GARAGE</h2>
+            <div class="stat-chip">
+              <svg viewBox="0 0 24 24" fill="#ffd166" stroke="#b38a00" stroke-width="1.5" width="18" height="18" aria-hidden="true">
+                <circle cx="12" cy="12" r="9"/>
+              </svg>
+              <span id="garage-coins-val">0</span> Coins
+            </div>
+          </div>
+          <p class="modal-sub" style="margin-bottom: 1rem;">Unlock and race high-performance sports cars.</p>
+
+          <div class="garage-cards-container" id="garage-cards">
+            <!-- Rendered dynamically -->
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn btn-secondary" id="btn-close-garage">Back to Menu</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= MODAL: HOW TO PLAY ================= -->
+      <div id="modal-guide" class="modal-overlay hidden" role="dialog" aria-labelledby="guide-title">
+        <div class="modal-card">
+          <h2 class="modal-title" id="guide-title">HOW TO PLAY</h2>
+          <p class="modal-sub">Survive the endless curves and climb the leaderboard.</p>
+
+          <ul class="guide-list">
+            <li>
+              <span class="guide-bullet">1</span>
+              <span><strong>Auto-Drive:</strong> Your sports car accelerates and tracks the asphalt automatically. No manual steering needed.</span>
+            </li>
+            <li>
+              <span class="guide-bullet">2</span>
+              <span><strong>One-Tap Drift:</strong> Watch the drift timing meter as you approach each curve. Tap when the needle enters the blue sweet spot!</span>
+            </li>
+            <li>
+              <span class="guide-bullet">3</span>
+              <span><strong>Perfect Timing:</strong> Perfect drifts award +100 pts, bonus coins, and build up your Combo Multiplier up to 8x!</span>
+            </li>
+            <li>
+              <span class="guide-bullet">4</span>
+              <span><strong>Don't Miss:</strong> Missing the apex deadline causes the car to violently skid off-road and wreck!</span>
+            </li>
+            <li>
+              <span class="guide-bullet">5</span>
+              <span><strong>Collect Coins:</strong> Pick up gold coins along the road to unlock custom race cars in the Garage.</span>
+            </li>
+          </ul>
+
+          <div class="modal-actions">
+            <button class="btn btn-primary" id="btn-close-guide">Got It!</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Engine Script -->
+    <script src="./game.js"></script>
+  </body>
+</html>
